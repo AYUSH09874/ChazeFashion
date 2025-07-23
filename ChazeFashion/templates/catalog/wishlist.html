@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}My Wishlist - ChazeFashion{% endblock %}
+
+{% block content %}
+<div class="container mx-auto">
+    <h1 class="text-3xl font-bold mb-8">My Wishlist</h1>
+    
+    {% if wishlist.products.all %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {% for product in wishlist.products.all %}
+            <div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+                <figure class="px-4 pt-4">
+                    {% if product.pr_images %}
+                        <img src="{{ product.pr_images.url }}" alt="{{ product.pr_name }}" 
+                             class="rounded-xl h-48 w-full object-cover" />
+                    {% else %}
+                        <div class="bg-base-300 rounded-xl h-48 w-full flex items-center justify-center">
+                            <i class="fas fa-tshirt text-6xl text-base-content opacity-50"></i>
+                        </div>
+                    {% endif %}
+                </figure>
+                <div class="card-body">
+                    <h2 class="card-title">{{ product.pr_name }}</h2>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="badge badge-primary">{{ product.pr_cate }}</span>
+                        <span class="badge badge-secondary">{{ product.pr_season }}</span>
+                    </div>
+                    
+                    {% if product.pr_brand %}
+                        <p class="text-sm text-base-content opacity-70">Brand: {{ product.pr_brand }}</p>
+                    {% endif %}
+                    
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="text-2xl font-bold text-primary">${{ product.pr_price }}</div>
+                        <div class="rating rating-sm">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= product.pr_reviews %}
+                                    <input type="radio" name="rating-{{ product.pr_id }}" 
+                                           class="mask mask-star-2 bg-orange-400" checked disabled />
+                                {% else %}
+                                    <input type="radio" name="rating-{{ product.pr_id }}" 
+                                           class="mask mask-star-2 bg-orange-400" disabled />
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="card-actions justify-end">
+                        <a href="{% url 'product_detail' product.pr_id %}" class="btn btn-primary btn-sm">
+                            View Details
+                        </a>
+                        <a href="{% url 'add_to_cart' product.pr_id %}" class="btn btn-outline btn-sm">
+                            <i class="fas fa-shopping-cart"></i>
+                        </a>
+                        <a href="{% url 'remove_from_wishlist' product.pr_id %}" class="btn btn-error btn-sm" title="Remove from Wishlist">
+    <i class="fas fa-heart-broken"></i>
+</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-12">
+            <div class="text-6xl mb-4">💝</div>
+            <h3 class="text-xl font-semibold mb-2">Your wishlist is empty</h3>
+            <p class="text-base-content opacity-70 mb-6">
+                Start adding products to your wishlist to save them for later!
+            </p>
+            <a href="{% url 'product_list' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-shopping-bag mr-2"></i>
+                Browse Products
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

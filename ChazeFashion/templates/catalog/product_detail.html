@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.pr_name }} - ChazeFashion{% endblock %}
+
+{% block content %}
+<div class="container mx-auto">
+    <!-- Breadcrumb -->
+    <div class="text-sm breadcrumbs mb-6">
+        <ul>
+            <li><a href="{% url 'home' %}">Home</a></li>
+            <li><a href="{% url 'product_list' %}">Products</a></li>
+            <li>{{ product.pr_name }}</li>
+        </ul>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Product Image -->
+        <div class="card bg-base-100 shadow-xl">
+            <figure class="px-4 pt-4">
+                {% if product.pr_images %}
+                    <img src="{{ product.pr_images.url }}" alt="{{ product.pr_name }}" 
+                         class="rounded-xl w-full h-96 object-cover" />
+                {% else %}
+                    <div class="bg-base-300 rounded-xl w-full h-96 flex items-center justify-center">
+                        <i class="fas fa-tshirt text-8xl text-base-content opacity-50"></i>
+                    </div>
+                {% endif %}
+            </figure>
+        </div>
+        
+        <!-- Product Details -->
+        <div class="space-y-6">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">{{ product.pr_name }}</h1>
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="badge badge-primary">{{ product.pr_cate }}</span>
+                    <span class="badge badge-secondary">{{ product.pr_season }}</span>
+                    {% if product.pr_brand %}
+                        <span class="badge badge-accent">{{ product.pr_brand }}</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Rating -->
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="rating rating-md">
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= product.pr_reviews %}
+                                <input type="radio" name="rating" class="mask mask-star-2 bg-orange-400" checked disabled />
+                            {% else %}
+                                <input type="radio" name="rating" class="mask mask-star-2 bg-orange-400" disabled />
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    <span class="text-sm text-base-content opacity-70">
+                        ({{ product.pr_reviews }} stars)
+                    </span>
+                </div>
+                
+                <!-- Price -->
+                <div class="text-4xl font-bold text-primary mb-4">
+                    ${{ product.pr_price }}
+                </div>
+                
+                <!-- Stock Status -->
+                <div class="mb-4">
+                    {% if product.pr_stk_quant > 0 %}
+                        <span class="badge badge-success gap-2">
+                            <i class="fas fa-check"></i>
+                            In Stock ({{ product.pr_stk_quant }} available)
+                        </span>
+                    {% else %}
+                        <span class="badge badge-error gap-2">
+                            <i class="fas fa-times"></i>
+                            Out of Stock
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Product Specifications -->
+            <div class="card bg-base-200">
+                <div class="card-body">
+                    <h2 class="card-title text-lg mb-4">Product Details</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% if product.pr_fabric %}
+                            <div>
+                                <span class="font-semibold">Fabric:</span>
+                                <span>{{ product.pr_fabric }}</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if product.pr_texture %}
+                            <div>
+                                <span class="font-semibold">Texture:</span>
+                                <span>{{ product.pr_texture }}</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if product.pr_dimensions %}
+                            <div>
+                                <span class="font-semibold">Dimensions:</span>
+                                <span>{{ product.pr_dimensions }}</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if product.pr_weights %}
+                            <div>
+                                <span class="font-semibold">Weight:</span>
+                                <span>{{ product.pr_weights }}</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if product.pr_offers %}
+                            <div class="md:col-span-2">
+                                <span class="font-semibold">Special Offers:</span>
+                                <span class="text-primary">{{ product.pr_offers }}</span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-4">
+                {% if user.is_authenticated %}
+                    {% if product.pr_stk_quant > 0 %}
+                        <a href="{% url 'add_to_cart' product.pr_id %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-shopping-cart mr-2"></i>
+                            Add to Cart
+                        </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'add_to_wishlist' product.pr_id %}" class="btn btn-outline btn-lg">
+                        <i class="fas fa-heart mr-2"></i>
+                        Add to Wishlist
+                    </a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        Login to Purchase
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reviews Section -->
+    <div class="mt-12">
+        <h2 class="text-2xl font-bold mb-6">Customer Reviews</h2>
+        
+        {% if reviews %}
+            <div class="space-y-4">
+                {% for review in reviews %}
+                <div class="card bg-base-100 shadow-lg">
+                    <div class="card-body">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <div class="avatar placeholder">
+                                    <div class="bg-primary text-primary-content rounded-full w-8">
+                                        <span class="text-xs">{{ review.user.username|first|upper }}</span>
+                                    </div>
+                                </div>
+                                <span class="font-semibold">{{ review.user.username }}</span>
+                            </div>
+                            <div class="rating rating-sm">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= review.rating %}
+                                        <input type="radio" name="rating-{{ review.id }}" 
+                                               class="mask mask-star-2 bg-orange-400" checked disabled />
+                                    {% else %}
+                                        <input type="radio" name="rating-{{ review.id }}" 
+                                               class="mask mask-star-2 bg-orange-400" disabled />
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        {% if review.comment %}
+                            <p class="text-base-content">{{ review.comment }}</p>
+                        {% endif %}
+                        
+                        <div class="text-xs text-base-content opacity-50 mt-2">
+                            {{ review.created_at|date:"F j, Y" }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-8">
+                <div class="text-4xl mb-4">💬</div>
+                <h3 class="text-xl font-semibold mb-2">No reviews yet</h3>
+                <p class="text-base-content opacity-70">Be the first to review this product!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

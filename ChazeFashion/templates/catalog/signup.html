@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Up - ChazeFashion{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-base-200">
+    <div class="card w-96 bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title text-2xl font-bold text-center mb-6">Create Account</h2>
+            
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Username</span>
+                    </label>
+                    <input type="text" name="username" placeholder="Choose a username" 
+                           class="input input-bordered" required />
+                    {% if form.username.errors %}
+                        <label class="label">
+                            <span class="label-text-alt text-error">{{ form.username.errors.0 }}</span>
+                        </label>
+                    {% endif %}
+                </div>
+                
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Password</span>
+                    </label>
+                    <input type="password" name="password1" placeholder="Enter your password" 
+                           class="input input-bordered" required />
+                    {% if form.password1.errors %}
+                        <label class="label">
+                            <span class="label-text-alt text-error">{{ form.password1.errors.0 }}</span>
+                        </label>
+                    {% endif %}
+                </div>
+                
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text">Confirm Password</span>
+                    </label>
+                    <input type="password" name="password2" placeholder="Confirm your password" 
+                           class="input input-bordered" required />
+                    {% if form.password2.errors %}
+                        <label class="label">
+                            <span class="label-text-alt text-error">{{ form.password2.errors.0 }}</span>
+                        </label>
+                    {% endif %}
+                </div>
+                
+                <div class="form-control mt-6">
+                    <button type="submit" class="btn btn-primary">Create Account</button>
+                </div>
+            </form>
+            
+            <div class="divider">OR</div>
+            
+            <div class="text-center">
+                <p class="text-sm text-base-content opacity-70 mb-4">
+                    Already have an account?
+                </p>
+                <a href="{% url 'login' %}" class="btn btn-outline btn-wide">
+                    Login
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - ChazeFashion{% endblock %}
+
+{% block content %}
+<div class="container mx-auto">
+    <h1 class="text-3xl font-bold mb-8">My Profile</h1>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Profile Info -->
+        <div class="lg:col-span-1">
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body text-center">
+                    <div class="avatar mb-4">
+                        <div class="w-24 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                            {% if user_profile.avatar %}
+                                <img src="{{ user_profile.avatar.url }}" alt="{{ user.username }}" />
+                            {% else %}
+                                <div class="bg-primary text-primary-content rounded-full w-24 h-24 flex items-center justify-center">
+                                    <span class="text-3xl font-bold">{{ user.username|first|upper }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <h2 class="text-2xl font-bold">{{ user.username }}</h2>
+                    <p class="text-base-content opacity-70">{{ user.email }}</p>
+                    
+                    <div class="divider"></div>
+                    
+                    <div class="text-left space-y-2">
+                        {% if user_profile.phone %}
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-phone text-primary"></i>
+                                <span>{{ user_profile.phone }}</span>
+                            </div>
+                        {% endif %}
+                        
+                        {% if user_profile.address %}
+                            <div class="flex items-start gap-2">
+                                <i class="fas fa-map-marker-alt text-primary mt-1"></i>
+                                <span>{{ user_profile.address }}</span>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-wallet text-primary"></i>
+                            <span>Wallet Balance: ${{ user_profile.wallet_balance }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Edit Profile Form -->
+        <div class="lg:col-span-2">
+            <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                    <h2 class="card-title text-xl mb-6">Edit Profile</h2>
+                    
+                    <form method="post" enctype="multipart/form-data" class="space-y-4">
+                        {% csrf_token %}
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text font-semibold">Phone Number</span>
+                                </label>
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                    <label class="label">
+                                        <span class="label-text-alt text-error">{{ form.phone.errors.0 }}</span>
+                                    </label>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-control">
+                                <label class="label">
+                                    <span class="label-text font-semibold">Profile Picture</span>
+                                </label>
+                                {{ form.avatar }}
+                                {% if form.avatar.errors %}
+                                    <label class="label">
+                                        <span class="label-text-alt text-error">{{ form.avatar.errors.0 }}</span>
+                                    </label>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text font-semibold">Address</span>
+                            </label>
+                            {{ form.address }}
+                            {% if form.address.errors %}
+                                <label class="label">
+                                    <span class="label-text-alt text-error">{{ form.address.errors.0 }}</span>
+                                </label>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-control mt-6">
+                            <button type="submit" class="btn btn-primary">Update Profile</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
