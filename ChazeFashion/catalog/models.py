@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 # Product Model
 class Product(models.Model):
@@ -44,25 +46,28 @@ class Seller(models.Model):
     def __str__(self):
         return self.shop_name
 
-# User Profile Extension
+# Cart Model (moved before UserProfile to avoid circular reference)
+class Cart(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'catalog_cart'
+
+    def __str__(self):
+        return f"Cart of {self.user.username}"
+
+# User Profile Extension (removed circular cart reference)
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone = models.CharField(max_length=20, blank=True)
     address = models.TextField(blank=True)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     wallet_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    cart = models.OneToOneField('Cart', on_delete=models.SET_NULL, null=True, blank=True)
+    # Removed cart field to avoid circular reference - access via user.cart instead
 
     def __str__(self):
         return self.user.username
-
-# Cart Model
-class Cart(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Cart of {self.user.username}"
 
 # Wishlist Model
 class Wishlist(models.Model):
@@ -71,6 +76,15 @@ class Wishlist(models.Model):
 
     def __str__(self):
         return f"Wishlist of {self.user.username}"
+
+# CartItem Model
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+
+    def __str__(self):
+        return f"{self.quantity} x {self.product.pr_name}"
 
 # Ordered Item Model
 class OrderedItem(models.Model):
@@ -115,32 +129,64 @@ class Payment(models.Model):
     def __str__(self):
         return f"Payment {self.id} for Order {self.order.id}"
 
-class CartItem(models.Model):
-    cart = models.ForeignKey('Cart', on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField(default=1)
 
-    def __str__(self):
-        return f"{self.quantity} x {self.product.pr_name}"
-    
+# FIXED SIGNAL HANDLERS
+@receiver(post_save, sender=User)
+def create_user_profile_and_related_objects(sender, instance, created, **kwargs):
+    """
+    Create UserProfile, Cart, and Wishlist when a new user is created.
+    Uses get_or_create to prevent IntegrityError.
+    """
+    if created:
+        try:
+            # Create or get Cart
+            cart, cart_created = Cart.objects.get_or_create(user=instance)
+            
+            # Create or get UserProfile
+            user_profile, profile_created = UserProfile.objects.get_or_create(
+                user=instance,
+                defaults={
+                    'phone': '',
+                    'address': '',
+                    'wallet_balance': 0,
+                }
+            )
+            
+            # Create or get Wishlist
+            wishlist, wishlist_created = Wishlist.objects.get_or_create(user=instance)
+            
+            # Optional: Log creation status (remove in production)
+            print(f"User {instance.username} created:")
+            print(f"  - Cart: {'created' if cart_created else 'already existed'}")
+            print(f"  - Profile: {'created' if profile_created else 'already existed'}")
+            print(f"  - Wishlist: {'created' if wishlist_created else 'already existed'}")
+            
+        except Exception as e:
+            print(f"Error creating user-related objects for {instance.username}: {e}")
 
-# Ensure that the UserProfile is created when a User is created
-# ...existing code...
 
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from django.contrib.auth.models import User
+# Alternative signal handler if you want separate handlers for each model
+@receiver(post_save, sender=User)
+def create_user_cart(sender, instance, created, **kwargs):
+    """Create Cart for new user"""
+    if created:
+        Cart.objects.get_or_create(user=instance)
+
+@receiver(post_save, sender=User) 
+def create_user_profile(sender, instance, created, **kwargs):
+    """Create UserProfile for new user"""
+    if created:
+        UserProfile.objects.get_or_create(
+            user=instance,
+            defaults={
+                'phone': '',
+                'address': '',
+                'wallet_balance': 0,
+            }
+        )
 
 @receiver(post_save, sender=User)
-def create_user_profile_and_cart(sender, instance, created, **kwargs):
+def create_user_wishlist(sender, instance, created, **kwargs):
+    """Create Wishlist for new user"""
     if created:
-        cart = Cart.objects.create(user=instance)
-        UserProfile.objects.create(user=instance, cart=cart)
-
-# Ensure that the Wishlist is created when a User is created
-@receiver(post_save, sender=User)
-def create_user_profile_and_cart(sender, instance, created, **kwargs):
-    if created:
-        cart = Cart.objects.create(user=instance)
-        UserProfile.objects.create(user=instance, cart=cart)
-        Wishlist.objects.create(user=instance)
+        Wishlist.objects.get_or_create(user=instance)
