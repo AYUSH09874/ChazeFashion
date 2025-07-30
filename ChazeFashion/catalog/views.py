@@ -16,21 +16,27 @@ def home(request):
     return render(request, 'catalog/home.html', context)
 
 def signup(request):
-    """User registration"""
+    """User registration - FIXED VERSION"""
     if request.method == 'POST':
         form = UserCreationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            # Create user profile
-            UserProfile.objects.create(user=user)
-            # Create cart for user
-            Cart.objects.create(user=user)
-            # Create wishlist for user
-            Wishlist.objects.create(user=user)
-            
-            login(request, user)
-            messages.success(request, 'Account created successfully!')
-            return redirect('home')
+            try:
+                # Save the user - signal handlers will automatically create UserProfile, Cart, and Wishlist
+                user = form.save()
+                
+                # Login the user immediately
+                login(request, user)
+                messages.success(request, f'Welcome to ChazeFashion, {user.username}! Your account has been created successfully.')
+                return redirect('home')
+                
+            except Exception as e:
+                messages.error(request, f'Error creating account: {str(e)}. Please try again.')
+                return render(request, 'catalog/signup.html', {'form': form})
+        else:
+            # Form has validation errors
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field.title()}: {error}')
     else:
         form = UserCreationForm()
     
@@ -61,8 +67,9 @@ def user_logout(request):
 
 @login_required
 def profile(request):
-    """User profile page"""
-    user_profile = get_object_or_404(UserProfile, user=request.user)
+    """User profile page - FIXED VERSION"""
+    # Use get_or_create to handle cases where profile might not exist
+    user_profile, created = UserProfile.objects.get_or_create(user=request.user)
     
     if request.method == 'POST':
         form = UserProfileForm(request.POST, request.FILES, instance=user_profile)
@@ -70,6 +77,8 @@ def profile(request):
             form.save()
             messages.success(request, 'Profile updated successfully!')
             return redirect('profile')
+        else:
+            messages.error(request, 'Please correct the errors below.')
     else:
         form = UserProfileForm(instance=user_profile)
     
@@ -98,9 +107,15 @@ def product_list(request):
     if fabric:
         products = products.filter(pr_fabric__icontains=fabric)
     if price_min:
-        products = products.filter(pr_price__gte=price_min)
+        try:
+            products = products.filter(pr_price__gte=float(price_min))
+        except ValueError:
+            pass
     if price_max:
-        products = products.filter(pr_price__lte=price_max)
+        try:
+            products = products.filter(pr_price__lte=float(price_max))
+        except ValueError:
+            pass
     if brand:
         products = products.filter(pr_brand__icontains=brand)
     
@@ -124,35 +139,64 @@ def product_detail(request, product_id):
 
 @login_required
 def add_to_cart(request, product_id):
-    """Add product to cart (with quantity)"""
+    """Add product to cart (with quantity) - ENHANCED VERSION"""
     product = get_object_or_404(Product, pr_id=product_id)
+    
+    # Ensure cart exists (signal should create it, but just in case)
     cart, created = Cart.objects.get_or_create(user=request.user)
-    quantity = int(request.POST.get('quantity', 1))
-    cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+    
+    # Get quantity from POST data
+    try:
+        quantity = int(request.POST.get('quantity', 1))
+        if quantity <= 0:
+            quantity = 1
+    except (ValueError, TypeError):
+        quantity = 1
+    
+    # Add or update cart item
+    cart_item, created = CartItem.objects.get_or_create(
+        cart=cart, 
+        product=product,
+        defaults={'quantity': quantity}
+    )
+    
     if not created:
         cart_item.quantity += quantity
+        cart_item.save()
+        messages.success(request, f'Updated {product.pr_name} quantity in cart!')
     else:
-        cart_item.quantity = quantity
-    cart_item.save()
-    messages.success(request, f'{product.pr_name} added to cart!')
+        messages.success(request, f'{product.pr_name} added to cart!')
+    
     return redirect('cart')
 
 @login_required
 def cart(request):
-    """View cart and update quantities"""
+    """View cart and update quantities - ENHANCED VERSION"""
+    # Ensure cart exists
     cart, created = Cart.objects.get_or_create(user=request.user)
     cart_items = cart.items.select_related('product').all()
-    total = sum(item.product.pr_price * item.quantity for item in cart_items)
+    
     if request.method == 'POST':
-        for item in cart_items:
-            qty = int(request.POST.get(f'quantity_{item.id}', item.quantity))
-            if qty > 0:
-                item.quantity = qty
-                item.save()
-            else:
-                item.delete()
-        messages.success(request, 'Cart updated!')
-        return redirect('cart')
+        try:
+            for item in cart_items:
+                qty_key = f'quantity_{item.id}'
+                qty = int(request.POST.get(qty_key, item.quantity))
+                
+                if qty > 0:
+                    item.quantity = qty
+                    item.save()
+                else:
+                    item.delete()
+            
+            messages.success(request, 'Cart updated successfully!')
+            return redirect('cart')
+            
+        except (ValueError, TypeError) as e:
+            messages.error(request, 'Invalid quantity values. Please enter valid numbers.')
+    
+    # Calculate total
+    total = sum(item.product.pr_price * item.quantity for item in cart_items)
+    
     context = {
         'cart_items': cart_items,
         'total': total,
@@ -162,15 +206,22 @@ def cart(request):
 @login_required
 def remove_from_cart(request, item_id):
     """Remove an item from the cart"""
-    cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
-    cart_item.delete()
-    messages.success(request, 'Item removed from cart.')
+    try:
+        cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+        product_name = cart_item.product.pr_name
+        cart_item.delete()
+        messages.success(request, f'{product_name} removed from cart.')
+    except Exception as e:
+        messages.error(request, 'Error removing item from cart.')
+    
     return redirect('cart')
 
 @login_required
 def wishlist(request):
-    """User wishlist"""
-    user_wishlist = get_object_or_404(Wishlist, user=request.user)
+    """User wishlist - FIXED VERSION"""
+    # Ensure wishlist exists (signal should create it, but just in case)
+    user_wishlist, created = Wishlist.objects.get_or_create(user=request.user)
+    
     context = {
         'wishlist': user_wishlist,
     }
@@ -178,15 +229,35 @@ def wishlist(request):
 
 @login_required
 def add_to_wishlist(request, product_id):
-    """Add product to wishlist"""
+    """Add product to wishlist - IMPROVED VERSION"""
     product = get_object_or_404(Product, pr_id=product_id)
-    user_wishlist = get_object_or_404(Wishlist, user=request.user)
-    user_wishlist.products.add(product)
-    messages.success(request, f'{product.pr_name} added to wishlist!')
+    
+    # Ensure wishlist exists
+    user_wishlist, created = Wishlist.objects.get_or_create(user=request.user)
+    
+    # Check if product is already in wishlist
+    if user_wishlist.products.filter(pr_id=product_id).exists():
+        messages.info(request, f'{product.pr_name} is already in your wishlist!')
+    else:
+        user_wishlist.products.add(product)
+        messages.success(request, f'{product.pr_name} added to wishlist!')
+    
     return redirect('product_detail', product_id=product_id)
 
+@login_required
 def remove_from_wishlist(request, product_id):
-    wishlist = Wishlist.objects.get(user=request.user)
-    product = Product.objects.get(pk=product_id)
-    wishlist.products.remove(product)
+    """Remove product from wishlist - IMPROVED VERSION"""
+    try:
+        product = get_object_or_404(Product, pr_id=product_id)
+        user_wishlist, created = Wishlist.objects.get_or_create(user=request.user)
+        
+        if user_wishlist.products.filter(pr_id=product_id).exists():
+            user_wishlist.products.remove(product)
+            messages.success(request, f'{product.pr_name} removed from wishlist.')
+        else:
+            messages.info(request, 'Product was not in your wishlist.')
+            
+    except Exception as e:
+        messages.error(request, 'Error removing product from wishlist.')
+    
     return redirect('wishlist')
