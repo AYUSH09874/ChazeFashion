@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +7,226 @@
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --dark-gradient: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .navbar .btn-ghost:hover {
+            background: rgba(102, 126, 234, 0.2);
+            transform: translateY(-1px);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: var(--primary-gradient) !important;
+            border: none !important;
+            transform: translateY(0);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            pointer-events: auto !important;
+            cursor: pointer !important;
+            position: relative !important;
+            z-index: 10 !important;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6) !important;
+            background: var(--primary-gradient) !important;
+        }
+        
+        .btn-outline {
+            border: 2px solid #4facfe !important;
+            background: transparent !important;
+            color: #4fracfe !important;
+            transition: all 0.3s ease;
+            pointer-events: auto !important;
+            cursor: pointer !important;
+            position: relative !important;
+            z-index: 10 !important;
+        }
+        
+        .btn-outline:hover {
+            background: var(--accent-gradient) !important;
+            color: white !important;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+            border-color: transparent !important;
+        }
+        
+        .dropdown-content {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .menu li > a:hover {
+            background: var(--primary-gradient);
+            color: white;
+            transform: translateX(5px);
+            transition: all 0.3s ease;
+        }
+        
+        .avatar .rounded-full {
+            border: 2px solid transparent;
+            background: linear-gradient(white, white) padding-box,
+                        var(--accent-gradient) border-box;
+        }
+        
+        .bg-primary {
+            background: var(--primary-gradient) !important;
+        }
+        
+        .text-primary {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .alert {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+        }
+        
+        .alert-success {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(21, 128, 61, 0.2));
+            border-color: rgba(34, 197, 94, 0.3);
+        }
+        
+        .alert-error {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(185, 28, 28, 0.2));
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+        
+        .alert-info {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(29, 78, 216, 0.2));
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+        
+        .footer {
+            background: linear-gradient(135deg, rgba(12, 12, 12, 0.9), rgba(26, 26, 26, 0.9));
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .link-hover:hover {
+            color: #4facfe;
+            transform: translateY(-2px);
+            transition: all 0.3s ease;
+        }
+        
+        .social-icon {
+            display: inline-block;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .social-icon:hover {
+            transform: translateY(-3px) scale(1.1);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+        
+        .shadow-lg {
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3) !important;
+        }
+        
+        .container {
+            position: relative;
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1), transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1), transparent 50%);
+            pointer-events: none !important;
+            z-index: -5 !important;
+        }
+        
+        main {
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Animated background elements */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 25% 75%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 75% 25%, rgba(245, 87, 108, 0.1) 0%, transparent 50%);
+            pointer-events: none !important;
+            z-index: -10 !important;
+        }
+        
+        /* Fix for clickable elements */
+        .navbar-end a.btn {
+            pointer-events: auto !important;
+            cursor: pointer !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-decoration: none !important;
+            position: relative !important;
+            z-index: 100 !important;
+        }
+        
+        .navbar-end {
+            position: relative !important;
+            z-index: 50 !important;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(26, 26, 46, 0.5);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary-gradient);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-gradient);
+        }
+    </style>
 </head>
 <body class="min-h-screen bg-base-100">
     <!-- Navigation Bar -->
@@ -113,9 +333,9 @@
         </nav> 
         <nav>
             <div class="grid grid-flow-col gap-4">
-                <a href="#"><i class="fab fa-twitter text-xl"></i></a>
-                <a href="#"><i class="fab fa-instagram text-xl"></i></a>
-                <a href="#"><i class="fab fa-facebook text-xl"></i></a>
+                <a href="#" class="social-icon"><i class="fab fa-twitter text-xl text-white"></i></a>
+                <a href="#" class="social-icon"><i class="fab fa-instagram text-xl text-white"></i></a>
+                <a href="#" class="social-icon"><i class="fab fa-facebook text-xl text-white"></i></a>
             </div>
         </nav> 
         <aside>
@@ -123,3 +343,4 @@
         </aside>
     </footer>
 </body>
+</html>
